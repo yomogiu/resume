@@ -35,6 +35,20 @@
             }
         }
 
+        @keyframes blink-cursor {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 15px;
+            background-color: #D35400;
+            margin-left: 5px;
+            animation: blink-cursor 1s step-end infinite;
+        }
+
         body {
             font-family: 'Press Start 2P', cursive;
             background-color: #F5E6D3;
@@ -233,7 +247,7 @@
                     <h2>About Me</h2>
                     <p>I'm a program manager at AMD under the GPU Technologies software organization.</p>
                     <p>I have extensive experience in project management, having worked my way through all aspects of software QA from tester to QA lead. Now I work on strategic planning, project manage multi-year programs and initiatives, and delivering executive readouts of said programs and initiatives.</p>
-                    <p>Right now, my main interest is immersing myself with the evolving technology of LLMs and the ways it is transforming the work place. Also trying to brush up on my programming skills...</p>
+                    <p>Right now, my main interest is immersing myself with the evolving technology of LLMs and the ways it is transforming the work place. Also trying to brush up on my programming skills...<span class="cursor"></span></p>
                     <p>Certifications: PMP (2022)</p>
                 </div>
             </section>
