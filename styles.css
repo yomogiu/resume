@@ -42,6 +42,7 @@
     animation: blink-cursor 1s step-end infinite;
 }
 
+
 body {
     font-family: 'Press Start 2P', cursive;
     background-color: #F5E6D3;
@@ -57,19 +58,6 @@ body {
     max-width: 1200px;
     width: 100%;
     position: relative;
-}
-
-.rpg-menu {
-    position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: #FFDAB9;
-    border: 4px solid #8B4513;
-    padding: 10px;
-    width: 200px;
-    z-index: 2;
-    image-rendering: pixelated;
-    box-shadow: 0 0 0 4px #FFDAB9, 0 0 0 8px #8B4513;
 }
 
 .falling-stars {
@@ -88,6 +76,15 @@ body {
     height: 20px;
     background-color: #db7012;
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.rpg-menu {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10px;
+    width: 180px;
+    z-index: 2;
 }
 
 .rpg-menu-button {
