@@ -33,6 +33,29 @@
     50% { opacity: 1; }
 }
 
+@media screen and (max-width: 768px) {
+    .site-wrapper {
+        flex-direction: column;
+    }
+
+    .rpg-menu {
+        position: static;
+        width: 100%;
+        transform: none;
+        margin-bottom: 20px;
+        display: none; /* Hide the menu on mobile by default */
+    }
+
+    .container {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .rpg-menu.show {
+        display: block;
+    }
+}
+
 .cursor {
     display: inline-block;
     width: 10px;
