@@ -34,7 +34,11 @@
     50% { opacity: 1; }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
+    body {
+        font-size: 14px;
+    }
+
     .site-wrapper {
         flex-direction: column;
     }
@@ -46,12 +50,13 @@
     .container {
         margin-left: 0;
         width: 100%;
-        padding: 10px;
+        padding: 10px 20px;
+        overflow-x: hidden; /* Prevent horizontal scrolling */
     }
 
     section {
         min-height: 100vh;
-        padding: 20px 0;
+        padding: 40px 0;
         justify-content: flex-start;
     }
 
@@ -64,19 +69,54 @@
     }
 
     p, #projects li {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .pixel-art {
-        width: 80px;
-        height: 80px;
+        width: 100px;
+        height: auto;
     }
 }
 
-@media screen and (max-width: 768px) and (max-height: 600px) {
+@media screen and (max-width: 375px) {
+    body {
+        font-size: 12px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    p, #projects li {
+        font-size: 12px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media screen and (max-width: 1024px) and (orientation: landscape) {
     section {
         min-height: auto;
-        padding: 40px 0;
+        padding: 20px 0;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    p, #projects li {
+        font-size: 12px;
     }
 }
 
@@ -98,6 +138,7 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
+    font-size: 16px;
 }
 
 .site-wrapper {
@@ -185,6 +226,7 @@ body {
     margin-left: 240px; /* 200px menu width + 40px margin */
     padding: 20px;
     flex-grow: 1;
+    max-width: 100%;
 }
 
 section {
@@ -193,9 +235,6 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transform: translateY(50px);
-    transition: all 1s ease;
 }
 
 section.visible {
@@ -205,19 +244,21 @@ section.visible {
 
 h1 {
     font-size: 32px;
-    text-transform: uppercase;
     margin-bottom: 20px;
     text-align: center;
+    word-break: break-word;
 }
 
 h2 {
     font-size: 24px;
     margin-bottom: 20px;
+    word-break: break-word;
 }
 
 p {
     margin-bottom: 20px;
-    font-size: 14px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 a {
@@ -234,9 +275,8 @@ a:hover {
 }
 
 .pixel-art {
-    image-rendering: pixelated;
-    width: 100px;
-    height: 100px;
+    max-width: 100%;
+    height: auto;
     margin-bottom: 20px;
 }
 
@@ -251,22 +291,4 @@ a:hover {
 
 #contact p {
     text-align: center;
-}
-
-@media (max-width: 1200px) {
-    .site-wrapper {
-        flex-direction: column;
-        align-items: center;
-    }
-    .rpg-menu {
-        position: static;
-        transform: none;
-        margin-bottom: 20px;
-    }
-    .container {
-        margin-left: 0;
-    }
-    .star-container {
-        display: none;
-    }
 }
