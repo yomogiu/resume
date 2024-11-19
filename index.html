@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pierre's Resume</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Add Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Add Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
     
@@ -15,6 +22,7 @@
             <button class="rpg-menu-button" data-target="about">About</button>
             <button class="rpg-menu-button" data-target="skills">Skills</button>
             <button class="rpg-menu-button" data-target="experience">Experience</button>
+            <button class="rpg-menu-button" data-target="projects">Projects</button>
             <button class="rpg-menu-button" data-target="contact">Contact</button>
             <div class="falling-stars"></div>
         </div>
@@ -31,9 +39,9 @@
             <section id="about" class="section">
                 <div>
                     <h2>About Me</h2>
-                    <p>I'm a program manager at AMD under the GPU Technologies software organization.</p>
-                    <p>I have extensive experience in project management, having worked my way through all levels of software QA from tester to QA lead. Now I work on strategic planning, project manage multi-year programs and initiatives, and delivering executive readouts of said programs and initiatives to senior leadership.</p>
-                    <p>Right now, my main interest is immersing myself with the evolving technology of LLMs and the ways it is transforming the work place. Also trying to brush up on my programming skills...<span class="cursor"></span></p>
+                    <p>I'm a program manager at AMD under the GPU Technologies software organization.</p><br>
+                    <p>I have extensive experience in project management, having worked my way through all levels of software QA from tester to QA lead. Now I work on strategic planning, project manage multi-year programs and initiatives, and delivering executive readouts of said programs and initiatives to senior leadership.</p><br>
+                    <p>Right now, my main interest is immersing myself with the evolving technology of LLMs and the ways it is transforming the work place. Also trying to brush up on my programming skills...<span class="cursor"></span></p><br>
                     <p>Certifications: PMP (2022)</p>
                 </div>
             </section>
@@ -60,6 +68,15 @@
                 </div>
             </section>
 
+            <section id="projects" class="section">
+                <div>
+                    <h2>Projects</h2>
+                    <br>
+                    <h3><a href="https://github.com/yomogiu/task-tracker-llm">Task Tracker with Email Assistant (GitHub)</a></h3>
+                    <div id="task-dashboard-root"></div>
+                </div>
+            </section>
+
             <section id="contact">
                 <div>
                     <h2>Contact</h2>
@@ -70,8 +87,10 @@
     </div>
 
     <script src="animations.js"></script>
-    
+
     <canvas id="canvas" width="400" height="400"></canvas>
+
+    <script type="text/babel" src="dashboard.js"></script>
 
 </body>
 </html>
