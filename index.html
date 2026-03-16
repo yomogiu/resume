@@ -370,6 +370,16 @@
       animation: pulse-dot 2s ease-in-out infinite;
     }
 
+    .project-status--marquee {
+      color: var(--cyan-bright);
+      letter-spacing: 3px;
+    }
+
+    .project-status--marquee::before {
+      background: var(--cyan-bright);
+      box-shadow: 0 0 10px var(--cyan-bright);
+    }
+
     @keyframes pulse-dot {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.3; }
@@ -692,9 +702,32 @@
         <div class="command" data-command="ls -la ./projects/">
           <span class="prompt">user@dev:~$</span> <span class="command-text"></span>
         </div>
-        <div class="result" style="opacity: 0;">
+      <div class="result" style="opacity: 0;">
           <h2>PROJECTS</h2>
           <div class="projects-list">
+            <div class="project">
+              <div class="project-index">000</div>
+              <div class="project-body">
+                <div class="project-header">
+                  <span class="project-class">marquee</span>
+                  <span class="project-status project-status--marquee">flagship</span>
+                </div>
+                <div class="project-title">PaneLLM</div>
+                <div class="project-tech">
+                  <span class="tech-tag">Python</span>
+                  <span class="tech-tag">Web</span>
+                  <span class="tech-tag">LLMs</span>
+                  <span class="tech-tag">Local AI</span>
+                </div>
+                <div class="project-description">
+                  A unified interface for orchestrating multiple large language model backends, enabling fluid model switching, prompt routing, and structured context management for practical LLM workflows.
+                </div>
+                <a href="https://github.com/yomogiu/PaneLLM" target="_blank" class="project-link">view source</a>
+              </div>
+            </div>
+
+            <div class="project-connector"></div>
+
             <div class="project">
               <div class="project-index">001</div>
               <div class="project-body">
