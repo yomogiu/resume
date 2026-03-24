@@ -32,6 +32,7 @@
       --font-mono: 'IBM Plex Mono', 'SF Mono', Menlo, Monaco, monospace;
       --terminal-padding: 24px;
       --header-height: 38px;
+      --terminal-max-width: 1000px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,7 +94,9 @@
     .terminal-window {
       position: relative;
       z-index: 1;
-      width: 100%; height: 100vh;
+      width: min(100%, var(--terminal-max-width));
+      margin: 0 auto;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -672,8 +675,7 @@
         </div>
         <div class="result" style="opacity: 0;">
           <h2>ABOUT ME</h2>
-          <p>I've spent nearly two decades at AMD making GPUs work. Started as a software engineer in QA, shipped every major Radeon generation from HD 7000 through RX 5000, then moved into program management. These days I run cross-functional GPU programs and push AI tooling adoption — hosting engineering workshops on prompt engineering and Claude Code.</p>
-          <p>Outside of work I build things with MCP servers, tinker with transformer visualizations, and write about whatever's on my mind.</p>
+          <p>I'm a Senior Technical Program Manager at AMD under the GPU Technologies software organization.</p>
           <br>
           <h3>CERTIFICATIONS</h3>
           <p>PMP (2022)</p>
@@ -791,6 +793,29 @@
                 <a href="https://github.com/yomogiu/slackmycodex" target="_blank" class="project-link">view source</a>
               </div>
             </div>
+
+            <div class="project-connector"></div>
+
+            <div class="project">
+              <div class="project-index">004</div>
+              <div class="project-body">
+                <div class="project-header">
+                  <span class="project-class">side project</span>
+                  <span class="project-status">active</span>
+                </div>
+                <div class="project-title">LLM Eval Atlas</div>
+                <div class="project-tech">
+                  <span class="tech-tag">HTML</span>
+                  <span class="tech-tag">JavaScript</span>
+                  <span class="tech-tag">LLM Evals</span>
+                  <span class="tech-tag">Research</span>
+                </div>
+                <div class="project-description">
+                  A living field guide to the benchmarks behind model launch posts and arXiv tables. Covers what each eval actually measures, dataset scope, access model, scoring technique, and why a good score can still mislead.
+                </div>
+                <a href="projects/llm-evals.html" class="project-link">open dossier</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -802,45 +827,12 @@
         <div class="result" style="opacity: 0;">
           <h2>WORK HISTORY</h2>
           <div class="job">
-            <div class="job-title">Senior Program Manager @ AMD</div>
-            <div class="job-date">2025 - PRESENT</div>
+            <div class="job-title">AMD</div>
             <div class="job-description">
               <ul>
-                <li>Running GPU programs end-to-end — lab planning, hardware budget, CI health, customer deliverables, weekly VP readouts</li>
-                <li>Leading a pre-silicon shift-left initiative using VBOX/QEMU emulation to validate kernel and user mode drivers before hardware arrives</li>
-                <li>Built executive KPI dashboards and Power BI views tracking defect rates, SOW delivery, and codebase health</li>
-              </ul>
-            </div>
-          </div>
-          <div class="job">
-            <div class="job-title">Program Manager @ AMD</div>
-            <div class="job-date">2019 - 2025</div>
-            <div class="job-description">
-              <ul>
-                <li>Led the Automation Transformation — coordinated 12 headcount across a matrix org, scaled to 1,000+ systems running daily in production</li>
-                <li>Built an ETL pipeline for resource forecasting across a 400-person org (US, Canada, India, China), cut scoping response time from 5 to 3 days</li>
-                <li>Supported Chief of Staff on quarterly CapEx justifications and monthly ops reviews to the Chief Software Officer</li>
-              </ul>
-            </div>
-          </div>
-          <div class="job">
-            <div class="job-title">Senior Program Management Analyst @ AMD</div>
-            <div class="job-date">2016 - 2019</div>
-            <div class="job-description">
-              <ul>
-                <li>Software QA Lead for every flagship AMD GPU — Radeon R9 Fury, RX Vega, RX 5000 Series</li>
-                <li>Owned end-to-end driver and firmware quality for product launches with globally distributed teams</li>
-                <li>Established the performance benchmarking framework (workload selection, ACPI cycles, stutter KPIs) that shaped GPU launches</li>
-              </ul>
-            </div>
-          </div>
-          <div class="job">
-            <div class="job-title">Software Engineer @ AMD</div>
-            <div class="job-date">2006 - 2016</div>
-            <div class="job-description">
-              <ul>
-                <li>QA Lead for Radeon HD 7700/7750 and R9 300 Series — led a 7-person team across driver and firmware layers</li>
-                <li>Wrote the test process manuals that onboarded every new tester in the org</li>
+                <li>Running GPU programs end-to-end — lab planning, hardware budget, validation, customer deliverables, weekly VP readouts, press drivers</li>
+                <li>Build dashboards and track KPIs</li>
+                <li>Lead cross functional initiatives and transformation</li>
               </ul>
             </div>
           </div>
