@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Eval Atlas</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
+
+    :root {
+      --page: #f5efe4;
+      --page-2: #efe4d4;
+      --surface: rgba(255, 251, 245, 0.86);
+      --surface-strong: rgba(255, 248, 239, 0.96);
+      --surface-muted: rgba(246, 238, 226, 0.9);
+      --line: rgba(82, 65, 48, 0.14);
+      --line-strong: rgba(82, 65, 48, 0.22);
+      --text: #33281d;
+      --text-soft: #615446;
+      --text-faint: #8a7a69;
+      --accent: #915d3b;
+      --accent-strong: #6f4529;
+      --accent-soft: rgba(145, 93, 59, 0.1);
+      --olive: #53614e;
+      --olive-soft: rgba(83, 97, 78, 0.12);
+      --shadow: 0 24px 50px rgba(72, 55, 37, 0.08);
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 14px;
+      --font-body: "Manrope", "Segoe UI", sans-serif;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-mono: "IBM Plex Mono", "SF Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(145, 93, 59, 0.08), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(83, 97, 78, 0.1), transparent 22%),
+        linear-gradient(180deg, #fbf7f1 0%, var(--page) 42%, var(--page-2) 100%);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(72, 55, 37, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(72, 55, 37, 0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.34), transparent 72%);
+    }
+
+    a {
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--accent);
+    }
+
+    .shell {
+      width: min(1500px, calc(100% - 48px));
+      margin: 28px auto 48px;
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 68px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 28px;
+      display: grid;
+      gap: 24px;
+      padding-top: 6px;
+    }
+
+    .panel {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .sidebar-panel {
+      padding: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .sidebar-panel:first-child {
+      border-top: none;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0.55;
+    }
+
+    .sidebar h1 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      line-height: 1.05;
+      margin-bottom: 12px;
+      letter-spacing: -0.03em;
+    }
+
+    .sidebar p {
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .sidebar-links {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding-left: 14px;
+      border-left: 2px solid transparent;
+      color: var(--text-soft);
+      transition: 0.2s ease;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      color: var(--text);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar-link span:last-child {
+      color: var(--text-faint);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-stats {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      margin-top: 8px;
+    }
+
+    .sidebar-stat {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(82, 65, 48, 0.09);
+    }
+
+    .sidebar-stat:first-child {
+      border-top: none;
+    }
+
+    .sidebar-stat strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 30px;
+      color: var(--accent-strong);
+      line-height: 1;
+    }
+
+    .sidebar-stat span {
+      color: var(--text-faint);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    .sidebar-note {
+      padding-left: 14px;
+      border-left: 2px solid rgba(145, 93, 59, 0.26);
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .sidebar-note strong {
+      color: var(--text);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .main {
+      display: grid;
+      gap: 0;
+      padding-bottom: 40px;
+    }
+
+    .hero {
+      padding: 18px 0 56px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .hero-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+      gap: 48px;
+      align-items: start;
+    }
+
+    .hero h2 {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 6vw, 64px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      margin-bottom: 16px;
+      max-width: 12ch;
+    }
+
+    .hero-copy p {
+      max-width: 72ch;
+      color: var(--text-soft);
+      font-size: 16px;
+    }
+
+    .hero-box {
+      padding-left: 20px;
+      border-left: 1px solid var(--line-strong);
+      align-self: end;
+    }
+
+    .hero-box h3 {
+      color: var(--accent-strong);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .hero-box p {
+      color: var(--text-soft);
+      font-size: 15px;
+    }
+
+    .hero-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .hero-point {
+      padding-top: 12px;
+      border-top: 1px solid rgba(82, 65, 48, 0.12);
+    }
+
+    .hero-point h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .hero-point p {
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .section {
+      padding: 58px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .section-intro {
+      color: var(--text-soft);
+      font-size: 15px;
+      max-width: 70ch;
+    }
+
+    .eyebrow {
+      color: var(--text-faint);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .card-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card-grid.three,
+    .card-grid.four {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px 34px;
+    }
+
+    .info-card {
+      padding-top: 14px;
+      border-top: 1px solid rgba(82, 65, 48, 0.12);
+      background: transparent;
+      border-radius: 0;
+    }
+
+    .info-card h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .info-card p {
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .atlas-controls {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      padding: 18px 0 16px;
+      margin-bottom: 14px;
+      background: linear-gradient(180deg, rgba(251, 247, 241, 0.96) 68%, rgba(251, 247, 241, 0.78) 84%, rgba(251, 247, 241, 0) 100%);
+      backdrop-filter: blur(6px);
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 0;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid var(--line-strong);
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: rgba(145, 93, 59, 0.54);
+      box-shadow: none;
+    }
+
+    .results-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      color: var(--text-faint);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      min-width: 0;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .filter-btn {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--text-soft);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      color: var(--accent-strong);
+      border-color: rgba(145, 93, 59, 0.24);
+      background: rgba(145, 93, 59, 0.1);
+    }
+
+    .atlas-grid {
+      display: grid;
+      gap: 0;
+    }
+
+    .benchmark-card {
+      padding: 26px 0 30px;
+      border-top: 1px solid var(--line-strong);
+      background: transparent;
+      transition: none;
+    }
+
+    .benchmark-card:first-child {
+      border-top: 1px solid rgba(82, 65, 48, 0.18);
+    }
+
+    .benchmark-card:hover {
+      transform: none;
+      background: transparent;
+      border-color: var(--line-strong);
+    }
+
+    .benchmark-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .benchmark-title {
+      font-family: var(--font-display);
+      font-size: 34px;
+      line-height: 1.05;
+      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+    }
+
+    .benchmark-meta {
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .pill-category {
+      background: rgba(83, 97, 78, 0.1);
+      color: var(--olive);
+      border-color: rgba(83, 97, 78, 0.16);
+    }
+
+    .pill-public {
+      background: rgba(83, 97, 78, 0.12);
+      color: var(--olive);
+      border-color: rgba(83, 97, 78, 0.2);
+    }
+
+    .pill-mixed {
+      background: rgba(145, 93, 59, 0.1);
+      color: var(--accent-strong);
+      border-color: rgba(145, 93, 59, 0.18);
+    }
+
+    .pill-dynamic {
+      background: rgba(76, 108, 112, 0.12);
+      color: #3d676c;
+      border-color: rgba(76, 108, 112, 0.18);
+    }
+
+    .pill-private {
+      background: rgba(104, 86, 62, 0.12);
+      color: #5f4a34;
+      border-color: rgba(104, 86, 62, 0.2);
+    }
+
+    .benchmark-summary {
+      margin-bottom: 18px;
+      color: var(--text-soft);
+      font-size: 16px;
+      max-width: 78ch;
+    }
+
+    .definition-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px 28px;
+    }
+
+    .definition {
+      padding-top: 12px;
+      border-top: 1px solid rgba(82, 65, 48, 0.08);
+    }
+
+    .definition dt {
+      color: var(--text-faint);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .definition dd {
+      color: var(--text);
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .tag-row,
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 0;
+      border-radius: 999px;
+      background: transparent;
+      border: none;
+      color: var(--text-faint);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .resource-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      color: var(--accent-strong);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .resource-link:hover {
+      text-decoration: underline;
+    }
+
+    .empty-state {
+      padding: 24px 0;
+      border-top: 1px dashed rgba(82, 65, 48, 0.2);
+      border-radius: 0;
+      background: transparent;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    .footer-note {
+      color: var(--text-faint);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1180px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .hero-points,
+      .hero-top,
+      .card-grid.three,
+      .card-grid.four,
+      .definition-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-box {
+        padding-left: 0;
+        padding-top: 16px;
+        border-left: none;
+        border-top: 1px solid var(--line-strong);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100%, calc(100% - 28px));
+        margin: 18px auto 28px;
+        gap: 28px;
+      }
+
+      .sidebar-panel,
+      .hero,
+      .section,
+      .benchmark-card {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .tool-row {
+        grid-template-columns: 1fr;
+      }
+
+      .benchmark-head {
+        flex-direction: column;
+      }
+
+      .pill-row {
+        justify-content: flex-start;
+      }
+    }
+    /* Gallery-inspired override */
+    :root {
+      --content-w: min(1540px, calc(100% - 44px));
+      --header-h: 84px;
+    }
+
+    body {
+      background: linear-gradient(180deg, #f7f2e8 0%, #f1eadc 42%, #e8decc 100%);
+      color: #171712;
+    }
+
+    .app-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 24;
+      padding: 0;
+      background: rgba(11, 12, 10, 0.98);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .app-chrome-inner {
+      width: var(--content-w);
+      margin: 0 auto;
+      min-height: var(--header-h);
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 24px;
+      align-items: center;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .chrome-nav-left,
+    .chrome-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .chrome-nav-right {
+      justify-content: flex-end;
+    }
+
+    .chrome-nav,
+    .chrome-brand-mark,
+    .chrome-meta {
+      display: none;
+    }
+
+    .chrome-brand {
+      display: block;
+      text-align: center;
+      justify-self: center;
+      min-width: 0;
+      flex: 0 0 auto;
+    }
+
+    .chrome-title {
+      color: #f7f1e4;
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: 48px;
+      line-height: 0.84;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .chrome-subtitle {
+      color: rgba(247, 241, 228, 0.7);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .chrome-link {
+      color: rgba(247, 241, 228, 0.84);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .chrome-link:hover,
+    .chrome-link.active {
+      color: #ffffff;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .chrome-search {
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid rgba(247, 241, 228, 0.84);
+      border-radius: 50%;
+      position: relative;
+      display: inline-block;
+      opacity: 0.8;
+      flex: 0 0 auto;
+    }
+
+    .chrome-search::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 1.5px;
+      right: -5px;
+      bottom: -3px;
+      background: rgba(247, 241, 228, 0.84);
+      transform: rotate(45deg);
+      transform-origin: center;
+    }
+
+    .chrome-cart {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      min-height: var(--header-h);
+      padding: 0 14px;
+      background: var(--gold);
+      color: #fef8ec;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      flex: 0 0 auto;
+    }
+
+    .marquee-band {
+      background: #f9f4eb;
+      border-top: 4px solid var(--gold);
+      border-bottom: 1px solid rgba(41, 34, 24, 0.14);
+      text-align: center;
+      padding: 14px 20px 10px;
+    }
+
+    .marquee-band-inner {
+      width: min(980px, calc(100% - 24px));
+      margin: 0 auto;
+    }
+
+    .marquee-band-title {
+      display: inline-block;
+      padding: 0 14px 10px;
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: 24px;
+      line-height: 0.96;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(41, 34, 24, 0.18);
+    }
+
+    .marquee-band-copy {
+      margin-top: 10px;
+      color: #40372c;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .marquee-band-copy strong {
+      color: var(--gold);
+    }
+
+    .poster-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      min-height: min(64vh, 760px);
+      background: #161712;
+    }
+
+    .poster-tile {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: min(64vh, 760px);
+      padding: 40px 34px;
+      overflow: hidden;
+      color: #fff8ea;
+      isolation: isolate;
+    }
+
+    .poster-tile::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.56));
+      z-index: -1;
+    }
+
+    .tile-knowledge {
+      background:
+        radial-gradient(circle at 18% 78%, rgba(250, 228, 196, 0.16), transparent 0 18%),
+        radial-gradient(circle at 66% 34%, rgba(0, 0, 0, 0.22), transparent 0 28%),
+        linear-gradient(120deg, rgba(39, 22, 18, 0.64), rgba(87, 45, 24, 0.44)),
+        linear-gradient(180deg, #a56747, #5e372b 60%, #312119 100%);
+    }
+
+    .tile-knowledge::before {
+      content: "";
+      position: absolute;
+      inset: -6% 28% 0 -10%;
+      background:
+        radial-gradient(circle at 50% 26%, rgba(232, 194, 148, 0.4), transparent 0 10%),
+        radial-gradient(circle at 44% 34%, rgba(58, 31, 19, 0.84), transparent 0 24%),
+        radial-gradient(circle at 30% 70%, rgba(227, 195, 156, 0.3), transparent 0 16%);
+      opacity: 0.95;
+      filter: blur(1px);
+      z-index: -2;
+    }
+
+    .tile-context {
+      background: linear-gradient(180deg, #9cab46, #798739);
+    }
+
+    .tile-context::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 26% 22%, #f7f0e0 0 8%, transparent 8.5%),
+        radial-gradient(circle at 26% 22%, transparent 0 10.5%, rgba(0, 0, 0, 0.32) 10.5% 12.4%, transparent 12.4%),
+        radial-gradient(circle at 60% 66%, #f5eee2 0 15%, transparent 15.5%),
+        radial-gradient(circle at 60% 66%, transparent 0 17.8%, rgba(173, 64, 90, 0.38) 17.8% 20%, transparent 20%),
+        linear-gradient(122deg, transparent 0 48%, rgba(233, 184, 34, 0.92) 48% 49.8%, transparent 50%);
+      z-index: -1;
+    }
+
+    .tile-frontier {
+      background:
+        linear-gradient(135deg, rgba(28, 30, 28, 0.32), rgba(28, 30, 28, 0.1)),
+        linear-gradient(180deg, #45504b 0%, #a08e52 36%, #7a2f2f 68%, #2c332d 100%);
+    }
+
+    .tile-frontier::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(112deg, transparent 0 62%, rgba(214, 41, 41, 0.38) 62% 63%, transparent 63%),
+        linear-gradient(16deg, transparent 0 70%, rgba(214, 41, 41, 0.3) 70% 71%, transparent 71%),
+        radial-gradient(circle at 64% 34%, rgba(32, 24, 19, 0.78), transparent 0 22%),
+        linear-gradient(180deg, rgba(224, 172, 53, 0.14), transparent 56%);
+      z-index: -1;
+      mix-blend-mode: multiply;
+    }
+
+    .poster-caption {
+      width: min(340px, 100%);
+      text-align: center;
+      transition: transform 0.24s ease;
+    }
+
+    .poster-tile:hover .poster-caption {
+      transform: translateY(-4px);
+    }
+
+    .poster-caption h2 {
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 0.92;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      text-shadow: 0 3px 20px rgba(0, 0, 0, 0.28);
+    }
+
+    .poster-rule {
+      width: min(220px, 100%);
+      height: 1px;
+      margin: 0 auto 12px;
+      background: rgba(255, 248, 234, 0.74);
+    }
+
+    .poster-caption p {
+      color: rgba(255, 248, 234, 0.88);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .shell {
+      width: var(--content-w);
+      margin: 46px auto 72px;
+      display: block;
+    }
+
+    .sidebar {
+      display: none;
+    }
+
+    .panel {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .main {
+      gap: 0;
+      padding-bottom: 0;
+    }
+
+    .hero,
+    .section {
+      padding: 40px 0 0;
+      scroll-margin-top: calc(var(--header-h) + 26px);
+      overflow: visible;
+      border-top: 1px solid rgba(41, 34, 24, 0.14);
+    }
+
+    .hero {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .hero::before {
+      display: none;
+    }
+
+    .hero-top {
+      grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+      gap: 34px;
+      align-items: start;
+    }
+
+    .kicker,
+    .eyebrow {
+      color: #7a6c5d;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      display: none;
+    }
+
+    .hero h2,
+    .section-title {
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: clamp(40px, 6vw, 70px);
+      line-height: 0.9;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      max-width: 12ch;
+    }
+
+    .section-title {
+      max-width: 15ch;
+      margin-bottom: 0;
+    }
+
+    .hero-copy p,
+    .section-intro {
+      color: #40372c;
+      font-size: 16px;
+      max-width: 72ch;
+    }
+
+    .hero-box {
+      padding-top: 0;
+      padding-left: 0;
+      border: none;
+      color: #40372c;
+      font-size: 15px;
+    }
+
+    .hero-points,
+    .card-grid.three,
+    .card-grid.four {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px 28px;
+      padding-top: 28px;
+      border-top: 1px solid rgba(41, 34, 24, 0.14);
+    }
+
+    .info-card,
+    .hero-point {
+      padding: 16px 0 0;
+      border-top: 1px solid rgba(41, 34, 24, 0.12);
+    }
+
+    .info-card h3,
+    .hero-point h3 {
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: 28px;
+      line-height: 0.95;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .info-card p,
+    .hero-point p {
+      color: #40372c;
+      font-size: 14px;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 26px;
+    }
+
+    .atlas-controls {
+      position: sticky;
+      top: calc(var(--header-h) + 10px);
+      z-index: 12;
+      margin: 0 0 18px;
+      padding: 18px 20px 16px;
+      background: rgba(248, 243, 234, 0.92);
+      border: 1px solid rgba(41, 34, 24, 0.14);
+      box-shadow: 0 16px 34px rgba(41, 34, 24, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .filter-btn {
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.56);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: #11120e;
+      color: #fff8ec;
+      border-color: #11120e;
+    }
+
+    .benchmark-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+      gap: 28px;
+      padding: 28px 0;
+      margin-top: 0;
+      border-top: 1px solid rgba(41, 34, 24, 0.14);
+      border-radius: 0;
+      background: transparent;
+      border-right: none;
+      border-left: none;
+      border-bottom: none;
+      box-shadow: none;
+    }
+
+    .benchmark-card::before {
+      display: none;
+    }
+
+    .benchmark-card:first-child {
+      border-top: 1px solid rgba(41, 34, 24, 0.22);
+    }
+
+    .benchmark-card:hover {
+      transform: none;
+      background: transparent;
+      border-color: rgba(41, 34, 24, 0.14);
+    }
+
+    .benchmark-head {
+      display: block;
+      margin-bottom: 0;
+    }
+
+    .benchmark-title {
+      font-family: "Bebas Neue", Impact, sans-serif;
+      font-size: clamp(34px, 4vw, 52px);
+      line-height: 0.9;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .benchmark-meta {
+      color: #7a6c5d;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .pill-row {
+      justify-content: flex-start;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      border-radius: 0;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .benchmark-summary {
+      color: #40372c;
+      font-size: 16px;
+      max-width: 80ch;
+    }
+
+    .definition-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px 24px;
+      margin-top: 2px;
+    }
+
+    .definition dt {
+      color: #7a6c5d;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .definition dd {
+      color: #40372c;
+    }
+
+    .tag,
+    .resource-link,
+    .results-chip,
+    .footer-note {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .resource-link {
+      color: var(--rust);
+    }
+
+    @media (max-width: 1240px) {
+      .app-chrome-inner {
+        width: var(--content-w);
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px 0;
+      }
+
+      .chrome-nav-left,
+      .chrome-nav-right {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .poster-grid,
+      .hero-top,
+      .hero-points,
+      .card-grid.three,
+      .card-grid.four,
+      .section-header,
+      .benchmark-card,
+      .definition-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .poster-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .poster-tile {
+        min-height: 48vh;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-chrome-inner {
+        width: min(100%, calc(100% - 24px));
+      }
+
+      .chrome-cart {
+        min-height: 54px;
+      }
+
+      .hero,
+      .section {
+        padding-top: 32px;
+      }
+
+      .atlas-controls {
+        padding: 16px 14px;
+      }
+
+      .tool-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-progress" aria-hidden="true">
+    <span class="scroll-progress-bar" id="scrollProgressBar"></span>
+  </div>
+
+  <header class="app-chrome">
+    <div class="app-chrome-inner">
+      <nav class="chrome-nav-left" aria-label="Primary sections">
+        <a class="chrome-link active" href="#overview">Overview</a>
+        <a class="chrome-link" href="#reading">Reading Scores</a>
+        <a class="chrome-link" href="#families">Families</a>
+      </nav>
+
+      <div class="chrome-brand">
+        <div class="chrome-title">LLM<br>Eval Atlas</div>
+        <div class="chrome-subtitle">Curated Benchmark Guide</div>
+      </div>
+
+      <nav class="chrome-nav-right" aria-label="Secondary navigation">
+        <a class="chrome-link" href="#atlas">Atlas</a>
+        <a class="chrome-link" href="../index.html">Back To Site</a>
+        <span class="chrome-cart" id="chromeCount">35</span>
+      </nav>
+    </div>
+  </header>
+
+  <section class="marquee-band">
+    <div class="marquee-band-inner">
+      <div class="marquee-band-title">Original Benchmark Notes With No Leaderboard Hype Or Score Worship</div>
+      <div class="marquee-band-copy">
+        Every eval listed here includes dataset scope, question type, creator, release era, access model, and scoring method.
+        The goal is to know what the benchmark is actually probing and <strong>why a strong score can still mislead you.</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="poster-grid" aria-label="Featured collections">
+    <a class="poster-tile tile-knowledge" href="#atlas" data-filter-target="knowledge">
+      <div class="poster-caption">
+        <h2>Foundation<br>Evals</h2>
+        <div class="poster-rule"></div>
+        <p>MMLU, GPQA, ARC, HellaSwag, AGIEval</p>
+      </div>
+    </a>
+    <a class="poster-tile tile-context" href="#atlas" data-filter-target="long">
+      <div class="poster-caption">
+        <h2>Long Context<br>& Chinese Suites</h2>
+        <div class="poster-rule"></div>
+        <p>LongBench, LongEval, InfiniteBench, C-Eval, CMMLU</p>
+      </div>
+    </a>
+    <a class="poster-tile tile-frontier" href="#atlas" data-filter-target="agent">
+      <div class="poster-caption">
+        <h2>Code, Safety<br>& Frontier Tests</h2>
+        <div class="poster-rule"></div>
+        <p>SWE-bench, LiveBench, BrowseComp, HarmBench</p>
+      </div>
+    </a>
+  </section>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="panel sidebar-panel">
+        <div class="kicker">Field Guide</div>
+        <h1>LLM Eval Atlas</h1>
+        <p>A friendlier map of the benchmark ecosystem: what each eval measures, what its dataset looks like, and when a score is actually worth trusting.</p>
+        <a class="back-link" href="../index.html">Back to main site</a>
+      </div>
+
+      <div class="panel sidebar-panel">
+        <nav class="sidebar-links" aria-label="Section navigation">
+          <a class="sidebar-link active" href="#overview"><span>Overview</span><span>Start</span></a>
+          <a class="sidebar-link" href="#reading"><span>How to read scores</span><span>Guide</span></a>
+          <a class="sidebar-link" href="#families"><span>Capability families</span><span>Map</span></a>
+          <a class="sidebar-link" href="#atlas"><span>Benchmark atlas</span><span>Browse</span></a>
+        </nav>
+      </div>
+
+      <div class="panel sidebar-panel">
+        <div class="sidebar-stats">
+          <div class="sidebar-stat">
+            <strong id="statTotal">0</strong>
+            <span>Benchmarks</span>
+          </div>
+          <div class="sidebar-stat">
+            <strong id="statFamilies">0</strong>
+            <span>Families</span>
+          </div>
+          <div class="sidebar-stat">
+            <strong id="statChinese">0</strong>
+            <span>Chinese / Bilingual</span>
+          </div>
+          <div class="sidebar-stat">
+            <strong id="statGuarded">0</strong>
+            <span>Mixed / Private</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel sidebar-panel">
+        <div class="sidebar-note">
+          <strong>Quick rule:</strong> one benchmark is not a profile. Broad knowledge, math, code, instruction following, safety, long-context, and fresh-data evals each tell a different story.
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="panel hero" id="overview">
+        <div class="hero-top">
+          <div class="hero-copy">
+            <div class="kicker">What This Page Does</div>
+            <h2>Benchmark scores need translation.</h2>
+            <p>
+              Model launch posts collapse a lot of nuance into a few bold numbers. This page is meant to slow that down.
+              It covers the benchmark itself, the shape of the questions, who made it, when it appeared, whether the data is public,
+              how the scoring works, and what a strong result probably means in practice.
+            </p>
+          </div>
+          <div class="hero-box">
+            <h3>Use it like this</h3>
+            <p>Start with the capability family, then check whether the benchmark is public, dynamic, or guarded. After that, ask whether the metric is objective, execution-based, or judge-based.</p>
+          </div>
+        </div>
+
+        <div class="hero-points">
+          <div class="hero-point">
+            <h3>Public MCQ is easy to compare</h3>
+            <p>It is also the easiest to saturate, memorize, and overfit.</p>
+          </div>
+          <div class="hero-point">
+            <h3>LLM-judge evals are useful</h3>
+            <p>They are fast and practical, but judge bias and style bias are real.</p>
+          </div>
+          <div class="hero-point">
+            <h3>Fresh or private tests matter</h3>
+            <p>As models get stronger, contamination resistance becomes part of the benchmark quality story.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section" id="reading">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">Score Reading</div>
+            <h2 class="section-title">How to read a benchmark result</h2>
+            <p class="section-intro">Different metrics reward different behavior. A high pass@k, a high judge win rate, and a high factual accuracy score are not interchangeable.</p>
+          </div>
+        </div>
+
+        <div class="card-grid four">
+          <article class="info-card">
+            <h3>Accuracy / Exact Match</h3>
+            <p>Best when there is one correct answer and a deterministic grader. Common in MCQ, short-answer QA, and math.</p>
+          </article>
+          <article class="info-card">
+            <h3>pass@k</h3>
+            <p>Mostly used in coding. It tells you whether one of several tries succeeds, which can hide instability compared with pass@1.</p>
+          </article>
+          <article class="info-card">
+            <h3>Win Rate / Judge Score</h3>
+            <p>Useful for assistant quality and open-ended prompts. Also sensitive to verbosity, style, and the judge model itself.</p>
+          </article>
+          <article class="info-card">
+            <h3>Resolved Rate / Attack Success</h3>
+            <p>Common in SWE and safety. These feel closer to deployment because the system must actually fix or resist something.</p>
+          </article>
+        </div>
+
+        <div class="card-grid three" style="margin-top: 14px;">
+          <article class="info-card">
+            <h3>MCQ inflation</h3>
+            <p>Multiple choice can reward elimination strategies and memorized answer patterns without proving deep reasoning.</p>
+          </article>
+          <article class="info-card">
+            <h3>Contamination</h3>
+            <p>Old public datasets leak into pretraining corpora, prompt collections, and evaluation harnesses. Freshness matters.</p>
+          </article>
+          <article class="info-card">
+            <h3>Context mirage</h3>
+            <p>A model can advertise a 128K or 1M window and still fail once the task moves beyond simple retrieval.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel section" id="families">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">Coverage</div>
+            <h2 class="section-title">Capability families worth checking</h2>
+            <p class="section-intro">A decent capability snapshot usually spans more than one family. The interesting question is how the model profile changes across them.</p>
+          </div>
+        </div>
+
+        <div class="card-grid four">
+          <article class="info-card">
+            <h3>Knowledge / Exams</h3>
+            <p>MMLU, GPQA, ARC, AGIEval, C-Eval, CMMLU. Breadth, science depth, and academic exam performance.</p>
+          </article>
+          <article class="info-card">
+            <h3>Math</h3>
+            <p>GSM8K, MATH, FrontierMath. Arithmetic is not the same thing as frontier mathematical reasoning.</p>
+          </article>
+          <article class="info-card">
+            <h3>Code / SWE</h3>
+            <p>HumanEval, MBPP, DS-1000, SWE-bench, LiveCodeBench. Code snippets and repo-scale software engineering are very different tasks.</p>
+          </article>
+          <article class="info-card">
+            <h3>Chat / Instruction</h3>
+            <p>IFEval, MT-Bench, AlpacaEval, Arena-Hard-Auto. Great for assistant quality and format following, but often judge-based.</p>
+          </article>
+          <article class="info-card">
+            <h3>Truth / Safety</h3>
+            <p>TruthfulQA, SimpleQA, HaluEval, HarmBench. Factuality, hallucination, and robust refusal each probe a different failure mode.</p>
+          </article>
+          <article class="info-card">
+            <h3>Long Context</h3>
+            <p>LongEval, LongBench, L-Eval, InfiniteBench, RULER. These test whether long windows are genuinely usable.</p>
+          </article>
+          <article class="info-card">
+            <h3>Chinese / Bilingual</h3>
+            <p>C-Eval, CMMLU, GAOKAO-Bench, AGIEval, LongBench, InfiniteBench. Localization changes both knowledge coverage and phrasing.</p>
+          </article>
+          <article class="info-card">
+            <h3>Agent / Frontier</h3>
+            <p>LiveBench, BrowseComp, Humanity's Last Exam. These try to stay useful after older public suites get saturated.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel section" id="atlas">
+        <div class="section-header">
+          <div>
+            <div class="eyebrow">Browse</div>
+            <h2 class="section-title">Benchmark atlas</h2>
+            <p class="section-intro">Search by benchmark name, owner, capability, question type, or tags like Chinese, long context, less common, dynamic, and private.</p>
+          </div>
+        </div>
+
+        <div class="atlas-controls">
+          <div class="tool-row">
+            <input
+              id="searchInput"
+              class="search-input"
+              type="search"
+              placeholder="Search: MMLU, long context, Chinese, judge-based, coding, private..."
+              aria-label="Search benchmarks"
+            >
+            <div class="results-chip" id="resultsSummary">0 visible</div>
+          </div>
+
+          <div class="filter-row" id="filterRow">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="knowledge">Knowledge</button>
+            <button class="filter-btn" data-filter="math">Math</button>
+            <button class="filter-btn" data-filter="code">Code</button>
+            <button class="filter-btn" data-filter="chat">Chat / Instruction</button>
+            <button class="filter-btn" data-filter="truth">Truth / Safety</button>
+            <button class="filter-btn" data-filter="long">Long Context</button>
+            <button class="filter-btn" data-filter="agent">Agent / Frontier</button>
+            <button class="filter-btn" data-filter="chinese">Chinese / Bilingual</button>
+            <button class="filter-btn" data-filter="guarded">Dynamic / Mixed / Private</button>
+            <button class="filter-btn" data-filter="less-common">Less Common</button>
+          </div>
+        </div>
+
+        <div class="atlas-grid" id="benchmarkGrid"></div>
+        <p class="footer-note">This is a guide to benchmark scope and interpretation, not a live ranking page. Release significance comes from the benchmark papers and project pages; saturation timing is an editorial inference from later harder or dynamic successors, score clustering, and contamination concerns. Read the paper or project link when you need the exact scoring protocol.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const benchmarks = [
+      {
+        name: "MMLU",
+        year: 2020,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Hendrycks et al.",
+        scope: "15,908 exam questions across 57 subjects, mostly 4-choice MCQ.",
+        format: "Academic multiple-choice questions spanning STEM, humanities, social science, and professional domains.",
+        measures: "Broad knowledge breadth plus test-taking style reasoning.",
+        metric: "Accuracy on subject-level MCQ, often in 5-shot or 0-shot form.",
+        meaning: "Useful baseline for breadth, but now fairly saturated and weaker at separating frontier models.",
+        tags: ["Core", "Saturated"],
+        paper: "https://arxiv.org/abs/2009.03300",
+        project: "https://github.com/hendrycks/test"
+      },
+      {
+        name: "MMLU-Pro",
+        year: 2024,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "TIGER-AI-Lab",
+        scope: "12,032 harder questions across 14 disciplines with 10 answer options.",
+        format: "Reasoning-heavier academic MCQ cleaned to reduce some MMLU artifacts.",
+        measures: "Harder cross-domain reasoning with less prompt sensitivity.",
+        metric: "Accuracy.",
+        meaning: "A better breadth benchmark than vanilla MMLU when you want more headroom.",
+        tags: ["Core"],
+        paper: "https://arxiv.org/abs/2406.01574",
+        project: "https://github.com/TIGER-AI-Lab/MMLU-Pro"
+      },
+      {
+        name: "GPQA",
+        year: 2023,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Rein et al.",
+        scope: "448 expert-written biology, chemistry, and physics questions; GPQA Diamond is the common subset.",
+        format: "Graduate-level 4-choice science QA designed to be Google-resistant.",
+        measures: "Scientific depth and reasoning under hard distractors.",
+        metric: "Accuracy.",
+        meaning: "One of the stronger science benchmarks because the questions are expert-written and harder to shortcut.",
+        tags: ["Core", "Science"],
+        paper: "https://arxiv.org/abs/2311.12022"
+      },
+      {
+        name: "ARC-Challenge",
+        year: 2018,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Allen AI",
+        scope: "2,590 hard questions from the 7,787-question ARC science benchmark.",
+        format: "Grade-school science MCQ filtered to defeat retrieval and word-cooccurrence baselines.",
+        measures: "Science reasoning, commonsense, and evidence use.",
+        metric: "Accuracy.",
+        meaning: "Still useful as a reasoning sanity check, though no longer frontier-only.",
+        tags: ["Core", "Science"],
+        paper: "https://arxiv.org/abs/1803.05457",
+        project: "https://allenai.org/data/arc"
+      },
+      {
+        name: "HellaSwag",
+        year: 2019,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Zellers et al.",
+        scope: "About 70K adversarially filtered sentence and paragraph completion examples.",
+        format: "Choose the most plausible next event or continuation.",
+        measures: "Commonsense event prediction and grounded inference.",
+        metric: "Accuracy.",
+        meaning: "Strong on broad world modeling signals, but not a direct proof of deliberate reasoning.",
+        tags: ["Core", "Commonsense"],
+        paper: "https://arxiv.org/abs/1905.07830",
+        project: "https://rowanzellers.com/hellaswag/"
+      },
+      {
+        name: "BBH",
+        year: 2022,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Suzgun et al.",
+        scope: "23 BIG-Bench tasks selected because older models trailed average human raters.",
+        format: "Algorithmic, symbolic, commonsense, and multi-step reasoning tasks.",
+        measures: "Prompted reasoning ability across heterogeneous tasks.",
+        metric: "Average task accuracy.",
+        meaning: "Good for reasoning flavor and prompt sensitivity, less useful as a single headline number.",
+        tags: ["Core", "Reasoning"],
+        paper: "https://arxiv.org/abs/2210.09261",
+        project: "https://github.com/suzgunmirac/BIG-Bench-Hard"
+      },
+      {
+        name: "AGIEval",
+        year: 2023,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Microsoft Research Asia",
+        scope: "Standardized human exams including SAT, LSAT, gaokao, math contests, and law qualifications.",
+        format: "Bilingual exam-style multiple choice, cloze, and free-response questions.",
+        measures: "Human exam performance and cross-domain academic reasoning.",
+        metric: "Accuracy and exam-style scoring.",
+        meaning: "Helpful bridge between English and Chinese exam benchmarks.",
+        tags: ["Bilingual", "Exams"],
+        paper: "https://arxiv.org/abs/2304.06364",
+        project: "https://github.com/ruixiangcui/AGIEval"
+      },
+      {
+        name: "C-Eval",
+        year: 2023,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "C-Eval Team",
+        scope: "13,948 Chinese questions across 52 disciplines and 4 difficulty levels.",
+        format: "Chinese educational and professional MCQ from middle school to expert domains.",
+        measures: "Chinese knowledge, reasoning, and culturally grounded exam ability.",
+        metric: "Accuracy.",
+        meaning: "A canonical Chinese breadth benchmark for local and multilingual models.",
+        tags: ["Chinese", "Core"],
+        paper: "https://arxiv.org/abs/2305.08322",
+        project: "https://cevalbenchmark.com/index.html"
+      },
+      {
+        name: "CMMLU",
+        year: 2023,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Li et al.",
+        scope: "67 Chinese subjects with dev and test splits and 4-option questions.",
+        format: "Chinese MMLU-style MCQ spanning STEM, humanities, social science, and China-specific topics.",
+        measures: "Chinese multitask understanding and localized knowledge.",
+        metric: "Accuracy.",
+        meaning: "Complements C-Eval with more China-specific context and subject coverage.",
+        tags: ["Chinese", "Core"],
+        paper: "https://arxiv.org/abs/2306.09212",
+        project: "https://github.com/haonan-li/CMMLU"
+      },
+      {
+        name: "GAOKAO-Bench",
+        year: 2023,
+        category: "Knowledge",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenLMLab",
+        scope: "2,811 Chinese college entrance exam questions from 2010-2022: 1,781 objective and 1,030 subjective.",
+        format: "Multiple choice, fill-in-the-blank, and open-response gaokao questions.",
+        measures: "Chinese exam performance across mixed answer formats.",
+        metric: "Objective accuracy plus human or judge-based scoring for subjective answers.",
+        meaning: "Great mixed-format Chinese eval, but subjective grading is less reproducible than pure MCQ.",
+        tags: ["Chinese", "Less Common"],
+        paper: "https://arxiv.org/abs/2305.12474",
+        project: "https://github.com/OpenLMLab/GAOKAO-Bench"
+      },
+      {
+        name: "GSM8K",
+        year: 2021,
+        category: "Math",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenAI",
+        scope: "8.5K grade-school math word problems.",
+        format: "Short natural-language arithmetic with multi-step reasoning.",
+        measures: "Basic numerical reasoning and solution consistency.",
+        metric: "Exact match on the final answer.",
+        meaning: "Good baseline math eval, but heavily saturated and easy to boost with sampling tricks.",
+        tags: ["Core", "Saturated"],
+        paper: "https://arxiv.org/abs/2110.14168",
+        project: "https://github.com/openai/grade-school-math"
+      },
+      {
+        name: "MATH",
+        year: 2021,
+        category: "Math",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Hendrycks et al.",
+        scope: "12,500 competition-style math problems across 7 areas and 5 difficulty levels.",
+        format: "Olympiad and contest math with free-response final answers.",
+        measures: "Stronger symbolic and proof-like math reasoning than GSM8K.",
+        metric: "Exact match on the final answer.",
+        meaning: "A classic hard math benchmark, though frontier systems now compress some of its value.",
+        tags: ["Core"],
+        paper: "https://arxiv.org/abs/2103.03874",
+        project: "https://github.com/hendrycks/math"
+      },
+      {
+        name: "FrontierMath",
+        year: 2024,
+        category: "Math",
+        accessType: "private",
+        accessLabel: "Partially Private",
+        owner: "Epoch AI",
+        scope: "350 original expert-written problems: 300 base questions plus 50 tier-4 questions.",
+        format: "Advanced mathematics requiring long reasoning and often code or symbolic tooling.",
+        measures: "Frontier math research ability rather than school-style math.",
+        metric: "Verified solve rate.",
+        meaning: "One of the better current math evals because much of the benchmark is protected from contamination.",
+        tags: ["Private", "Frontier"],
+        paper: "https://epoch.ai/frontiermath/the-benchmark",
+        project: "https://epoch.ai/benchmarks/frontiermath"
+      },
+      {
+        name: "HumanEval",
+        year: 2021,
+        category: "Code",
+        accessType: "mixed",
+        accessLabel: "Mixed / Hidden Tests",
+        owner: "OpenAI",
+        scope: "164 Python programming problems with hidden unit tests.",
+        format: "Write a function from a docstring and signature.",
+        measures: "Functional code synthesis on short programming tasks.",
+        metric: "pass@k, often pass@1 in modern reporting.",
+        meaning: "The canonical code benchmark, but small enough that contamination is a real concern.",
+        tags: ["Core"],
+        paper: "https://arxiv.org/abs/2107.03374",
+        project: "https://github.com/openai/human-eval"
+      },
+      {
+        name: "MBPP",
+        year: 2021,
+        category: "Code",
+        accessType: "mixed",
+        accessLabel: "Mixed / Hidden Tests",
+        owner: "Google Research",
+        scope: "974 entry-level Python programming tasks.",
+        format: "Short natural-language prompts for beginner-style coding problems.",
+        measures: "Basic program synthesis.",
+        metric: "Execution-based accuracy or pass@k.",
+        meaning: "Handy for smaller models and quick checks, but much easier than repo-scale software work.",
+        tags: ["Core"],
+        paper: "https://arxiv.org/abs/2108.07732"
+      },
+      {
+        name: "DS-1000",
+        year: 2023,
+        category: "Code",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Lai et al.",
+        scope: "1,000 data science code tasks built from StackOverflow across major Python libraries.",
+        format: "Realistic notebook-style prompts with library and API constraints.",
+        measures: "Practical data science coding with pandas, numpy, sklearn, matplotlib, and friends.",
+        metric: "Execution accuracy with extra surface-form constraints.",
+        meaning: "A much better fit than HumanEval when real Python library use matters.",
+        tags: ["Practical"],
+        paper: "https://proceedings.mlr.press/v202/lai23b.html",
+        project: "https://ds1000-code-gen.github.io/"
+      },
+      {
+        name: "MultiPL-E",
+        year: 2023,
+        category: "Code",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Cassano et al.",
+        scope: "HumanEval and MBPP translated into many additional programming languages.",
+        format: "Parallel code-generation benchmark across language ecosystems.",
+        measures: "Whether coding ability transfers beyond Python.",
+        metric: "pass@k by language.",
+        meaning: "Useful for spotting Python-only overfitting and multilingual code gaps.",
+        tags: ["Less Common", "Polyglot"],
+        paper: "https://doi.org/10.1109/TSE.2023.3267446",
+        project: "https://github.com/nuprl/MultiPL-E"
+      },
+      {
+        name: "SWE-bench",
+        year: 2023,
+        category: "Code",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Princeton NLP",
+        scope: "2,294 real GitHub issues and fixes from 12 Python repositories.",
+        format: "Given a repo plus issue text, edit code until the test suite passes.",
+        measures: "Repository-level software engineering, issue localization, and tool use.",
+        metric: "Resolved rate on deterministic tests.",
+        meaning: "Far closer to real development than snippet benchmarks, but much more expensive to run well.",
+        tags: ["Core", "Agentic"],
+        paper: "https://arxiv.org/abs/2310.06770",
+        project: "https://github.com/princeton-nlp/SWE-bench"
+      },
+      {
+        name: "LiveCodeBench",
+        year: 2024,
+        category: "Code",
+        accessType: "dynamic",
+        accessLabel: "Dynamic Public",
+        owner: "Berkeley Sky Lab",
+        scope: "Continuously refreshed contest problems; the benchmark has grown well past its initial release.",
+        format: "Code generation, execution, test-output prediction, and self-repair on time-stamped problems.",
+        measures: "Modern coding ability with contamination tracking.",
+        metric: "pass@1, pass@5, and task-specific coding scores.",
+        meaning: "One of the strongest current public coding evals because freshness is built into the design.",
+        tags: ["Dynamic", "Core"],
+        paper: "https://arxiv.org/abs/2403.07974",
+        project: "https://livecodebench.github.io/"
+      },
+      {
+        name: "IFEval",
+        year: 2023,
+        category: "Chat / Instruction",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Google Research",
+        scope: "Roughly 500 prompts covering 25 verifiable instruction types.",
+        format: "Prompts with explicit constraints such as word count, keywords, lists, or structure.",
+        measures: "Literal instruction following.",
+        metric: "Strict and loose instruction satisfaction.",
+        meaning: "Excellent for format adherence, but not a full test of answer quality or reasoning.",
+        tags: ["Core"],
+        paper: "https://arxiv.org/abs/2311.07911",
+        project: "https://github.com/google-research/google-research/tree/master/instruction_following_eval"
+      },
+      {
+        name: "MT-Bench",
+        year: 2023,
+        category: "Chat / Instruction",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "LMSYS",
+        scope: "80 expert-written multi-turn prompts across 8 chat categories.",
+        format: "Open-ended dialogue judged by humans or an LLM judge.",
+        measures: "General assistant quality in short multi-turn conversations.",
+        metric: "Judge score or pairwise win rate.",
+        meaning: "Fast and influential, but small and sensitive to judge choice, verbosity, and style.",
+        tags: ["Core", "Judge-Based"],
+        paper: "https://arxiv.org/abs/2306.05685",
+        project: "https://github.com/lm-sys/FastChat/tree/main/fastchat/llm_judge"
+      },
+      {
+        name: "AlpacaEval 2",
+        year: 2024,
+        category: "Chat / Instruction",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Tatsu Lab",
+        scope: "A diverse instruction-following evaluation set built for cheap automatic pairwise judging.",
+        format: "Model outputs are compared against a reference system with an LLM judge.",
+        measures: "Perceived helpfulness on instruction-following tasks.",
+        metric: "Win rate and length-controlled win rate.",
+        meaning: "Convenient for iteration, but still inherits judge bias and baseline dependence.",
+        tags: ["Core", "Judge-Based"],
+        paper: "https://yanndubs.github.io/publication/AlpacaEvalLC",
+        project: "https://github.com/tatsu-lab/alpaca_eval"
+      },
+      {
+        name: "Arena-Hard-Auto",
+        year: 2024,
+        category: "Chat / Instruction",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "LMArena",
+        scope: "Hard prompts sourced from Chatbot Arena traffic; v2 adds large fresh hard-prompt and creative-writing sets.",
+        format: "Open-ended prompts judged automatically with frontier models.",
+        measures: "How likely a model is to win on difficult real-world chat queries.",
+        metric: "Win rate with confidence intervals, often style-controlled.",
+        meaning: "One of the better automatic chat evals because it was built to correlate with Arena preferences.",
+        tags: ["Core", "Judge-Based"],
+        paper: "https://arxiv.org/abs/2406.11939",
+        project: "https://github.com/lmarena/arena-hard-auto"
+      },
+      {
+        name: "LiveBench",
+        year: 2024,
+        category: "Agent / Frontier",
+        accessType: "dynamic",
+        accessLabel: "Dynamic Public",
+        owner: "LiveBench Team",
+        scope: "Objectively graded tasks across several categories, refreshed monthly.",
+        format: "Fresh questions derived from new math contests, arXiv papers, news, datasets, and harder benchmark variants.",
+        measures: "General capability while resisting training-set contamination.",
+        metric: "Accuracy on objective ground-truth answers.",
+        meaning: "A strong modern general benchmark because it stays fresh and avoids judge-model scoring.",
+        tags: ["Dynamic", "Core"],
+        paper: "https://arxiv.org/abs/2406.19314",
+        project: "https://github.com/LiveBench/LiveBench"
+      },
+      {
+        name: "TruthfulQA",
+        year: 2021,
+        category: "Truth / Safety",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenAI / Oxford",
+        scope: "817 questions across 38 categories built to trigger common human misconceptions.",
+        format: "Short QA with distractor falsehoods and free-response variants.",
+        measures: "Truthfulness rather than mere fluency or recall.",
+        metric: "Truthfulness and informativeness, or MC accuracy depending on setup.",
+        meaning: "A useful hallucination-risk probe, but narrow and somewhat prompt-sensitive.",
+        tags: ["Core", "Hallucination"],
+        paper: "https://openai.com/index/truthfulqa/",
+        project: "https://github.com/sylinrl/TruthfulQA"
+      },
+      {
+        name: "SimpleQA",
+        year: 2024,
+        category: "Truth / Safety",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenAI",
+        scope: "4,326 short fact-seeking questions with single stable answers.",
+        format: "Short-answer factual QA built for easy grading and calibration analysis.",
+        measures: "Closed-book factuality on simple, verifiable facts.",
+        metric: "Accuracy plus calibration analysis.",
+        meaning: "Cleaner than TruthfulQA for short facts, but not a measure of long-form factual writing.",
+        tags: ["Core", "Factuality"],
+        paper: "https://openai.com/index/introducing-simpleqa/",
+        project: "https://github.com/openai/simple-evals"
+      },
+      {
+        name: "HaluEval",
+        year: 2023,
+        category: "Truth / Safety",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "RUCAIBox",
+        scope: "35K hallucination examples across general queries, QA, dialogue, and summarization.",
+        format: "Classify whether an answer contains hallucination.",
+        measures: "Hallucination recognition more than answer generation.",
+        metric: "Classification accuracy or F1.",
+        meaning: "Useful for studying hallucination detectors and evaluators, not just assistant helpfulness.",
+        tags: ["Less Common", "Hallucination"],
+        paper: "https://arxiv.org/abs/2305.11747",
+        project: "https://github.com/RUCAIBox/HaluEval"
+      },
+      {
+        name: "HarmBench",
+        year: 2024,
+        category: "Truth / Safety",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "Center for AI Safety",
+        scope: "510 harmful behaviors spanning semantic and functional attack categories.",
+        format: "Automated red-teaming and refusal evaluation across target models and defenses.",
+        measures: "Whether a model can be jailbroken and whether a defense holds.",
+        metric: "Attack success rate and refusal robustness metrics.",
+        meaning: "A modern safety benchmark; read it as robustness, not as general usefulness.",
+        tags: ["Safety", "Core"],
+        paper: "https://proceedings.mlr.press/v235/mazeika24a.html",
+        project: "https://github.com/centerforaisafety/HarmBench"
+      },
+      {
+        name: "LongEval / LongChat",
+        year: 2023,
+        category: "Long Context",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "LMSYS",
+        scope: "Synthetic topic-retrieval and line-retrieval tests introduced alongside LongChat.",
+        format: "Retrieve the right topic or exact line from increasingly long contexts.",
+        measures: "Whether claimed context windows function at all.",
+        metric: "Retrieval accuracy as context length grows.",
+        meaning: "LongChat is a model line; LongEval is the eval artifact people often mean when they cite it.",
+        tags: ["Less Common", "Long Context"],
+        paper: "https://lmsys.org/blog/2023-06-29-longchat/",
+        project: "https://github.com/DachengLi1/LongChat"
+      },
+      {
+        name: "LongBench",
+        year: 2023,
+        category: "Long Context",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "THUDM",
+        scope: "21 datasets across 6 task categories in English and Chinese.",
+        format: "Single-doc QA, multi-doc QA, summarization, few-shot learning, synthetic tasks, and code completion.",
+        measures: "Real-task long-context understanding across bilingual workloads.",
+        metric: "Task-specific automatic metrics aggregated across the suite.",
+        meaning: "A broad public long-context benchmark with better task variety than simple needle tests.",
+        tags: ["Bilingual", "Core"],
+        paper: "https://aclanthology.org/2024.acl-long.172/",
+        project: "https://github.com/THUDM/LongBench"
+      },
+      {
+        name: "L-Eval",
+        year: 2024,
+        category: "Long Context",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "An et al.",
+        scope: "20 sub-tasks, 508 long documents, and more than 2,000 human-labeled query-response pairs.",
+        format: "Long-context tasks from roughly 3K to 200K tokens with human labels and richer scoring.",
+        measures: "Quality of responses over long documents, not just retrieval.",
+        metric: "Task scores plus judge-assisted evaluation.",
+        meaning: "Useful when you care about answer quality under long context, not only recall of hidden snippets.",
+        tags: ["Less Common", "Judge-Based"],
+        paper: "https://aclanthology.org/2024.acl-long.776/"
+      },
+      {
+        name: "InfiniteBench",
+        year: 2024,
+        category: "Long Context",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenBMB",
+        scope: "12 English and Chinese tasks with average context length above 100K tokens.",
+        format: "A mix of synthetic and realistic super-long-context reasoning tasks.",
+        measures: "Very long context processing beyond the 8K to 32K regime.",
+        metric: "Task-specific accuracy and F1.",
+        meaning: "A more serious stress test when a model claims six-figure context windows.",
+        tags: ["Bilingual", "Less Common"],
+        paper: "https://aclanthology.org/2024.acl-long.814/",
+        project: "https://github.com/OpenBMB/InfiniteBench"
+      },
+      {
+        name: "RULER",
+        year: 2024,
+        category: "Long Context",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "NVIDIA",
+        scope: "13 configurable synthetic long-context tasks.",
+        format: "Needle retrieval, multi-hop tracing, aggregation, and multi-needle variants at increasing lengths.",
+        measures: "Long-context behavior beyond vanilla needle-in-a-haystack.",
+        metric: "Accuracy at different context lengths and task complexities.",
+        meaning: "Better than simple NIAH because it exposes failure when tasks require composition, not just lookup.",
+        tags: ["Less Common", "Long Context"],
+        paper: "https://arxiv.org/abs/2404.06654",
+        project: "https://github.com/NVIDIA/RULER"
+      },
+      {
+        name: "BrowseComp",
+        year: 2025,
+        category: "Agent / Frontier",
+        accessType: "public",
+        accessLabel: "Public",
+        owner: "OpenAI",
+        scope: "1,266 hard-to-find web research problems with short verifiable answers.",
+        format: "Agentic browsing questions that may require searching many sites.",
+        measures: "Persistence, search strategy, and evidence-finding on the open web.",
+        metric: "Accuracy.",
+        meaning: "A meaningful agent eval because browsing only helps if the model can search intelligently.",
+        tags: ["Agentic", "Frontier"],
+        paper: "https://openai.com/index/browsecomp/",
+        project: "https://github.com/openai/simple-evals"
+      },
+      {
+        name: "GDPval",
+        year: 2025,
+        category: "Agent / Frontier",
+        accessType: "mixed",
+        accessLabel: "Mixed / Gold Subset",
+        owner: "OpenAI",
+        scope: "1,320 real-world knowledge-work tasks across 44 occupations in 9 major U.S. GDP sectors, with a 220-task open gold subset.",
+        format: "Reference-file-heavy occupational tasks with deliverables such as documents, slides, diagrams, spreadsheets, and multimedia.",
+        measures: "How well models perform on economically valuable, realistic professional tasks rather than exam-style questions.",
+        metric: "Primarily pairwise human expert win/tie/loss comparisons, with an experimental automated grader for the open subset.",
+        meaning: "Closer to real knowledge work than classic academic benchmarks, but still an early one-shot proxy rather than a full workflow simulation.",
+        tags: ["Frontier", "Real-World", "Less Common", "Private"],
+        paper: "https://arxiv.org/abs/2510.04374",
+        project: "https://openai.com/index/gdpval/"
+      },
+      {
+        name: "Humanity's Last Exam",
+        year: 2025,
+        category: "Agent / Frontier",
+        accessType: "mixed",
+        accessLabel: "Mixed / Held-Out",
+        owner: "Center for AI Safety + Scale AI",
+        scope: "2,500 hard questions across 100-plus subjects, with public questions and a private held-out subset.",
+        format: "Broad academic and multimodal frontier benchmark built after older public suites started saturating.",
+        measures: "High-end closed-ended reasoning across many disciplines.",
+        metric: "Accuracy.",
+        meaning: "A modern broad frontier benchmark intended to stay hard after MMLU-style saturation.",
+        tags: ["Frontier", "Private"],
+        paper: "https://arxiv.org/abs/2501.14249",
+        project: "https://github.com/centerforaisafety/hle"
+      }
+    ];
+
+    const benchmarkHistory = {
+      "MMLU": {
+        launch: "At release in 2020, MMLU became the default broad academic benchmark because it compressed 57 subjects into one score and exposed how uneven LLM knowledge still was outside narrow prompting setups.",
+        saturation: "It started to look saturated by 2024, when frontier models were already posting around 90% and follow-on benchmarks like MMLU-Pro were explicitly framed as harder replacements."
+      },
+      "MMLU-Pro": {
+        launch: "At release in 2024, MMLU-Pro signaled that the field no longer trusted vanilla MMLU to separate top models, so the benchmark increased option count and difficulty while cleaning obvious artifacts.",
+        saturation: "As of March 2026 it is still more useful than vanilla MMLU, but the upper end began compressing in late 2025 as strong reasoning models pushed toward the high-80s and low-90s."
+      },
+      "GPQA": {
+        launch: "At release in 2023, GPQA mattered because it re-centered evaluation on expert-written, Google-resistant science questions rather than undergraduate-style academic breadth.",
+        saturation: "It was not obviously saturated at launch, but it started to compress in 2025 as top reasoning models moved into the 80s and beyond, even though it still remains harder than most broad knowledge suites."
+      },
+      "ARC-Challenge": {
+        launch: "When ARC-Challenge appeared in 2018, it signaled that retrieval and surface matching were not enough for science QA and that harder school-science reasoning benchmarks were needed.",
+        saturation: "It began losing frontier-level separation by roughly 2023 to 2024, though it still survives as a useful sanity check for general reasoning and open-weight model quality."
+      },
+      "HellaSwag": {
+        launch: "At release in 2019, HellaSwag became a landmark adversarial commonsense benchmark because it showed that next-token fluency did not automatically imply grounded event understanding.",
+        saturation: "It started to become saturated around 2024, when frontier systems were already scoring in the mid-90s and newer work shifted toward robustness and multilingual variants instead of the original headline score."
+      },
+      "BBH": {
+        launch: "At release in 2022, BBH signaled the chain-of-thought era by collecting BIG-Bench tasks where older models still lagged human performance and prompting strategy mattered a lot.",
+        saturation: "It began to compress in 2024 as reasoning-tuned systems solved many of its tasks reliably, although it remains a convenient spot-check for prompt-sensitive symbolic and multi-step reasoning."
+      },
+      "AGIEval": {
+        launch: "At release in 2023, AGIEval mattered because it tied model performance to recognizable human exams across English and Chinese settings rather than only synthetic NLP tasks.",
+        saturation: "Many of its easier subsets started to look compressed by 2024, especially for flagship proprietary systems, but it still retains some value as a bilingual exam-style bundle."
+      },
+      "C-Eval": {
+        launch: "At release in 2023, C-Eval became the canonical Chinese breadth benchmark and gave Chinese foundation-model work a local equivalent to MMLU-style reporting.",
+        saturation: "It started to look compressed by 2025 as top Chinese and multilingual frontier models clustered near the top, which is why it is now more often used as coverage rather than as a decisive differentiator."
+      },
+      "CMMLU": {
+        launch: "At release in 2023, CMMLU signaled a push to measure Chinese multitask understanding with more China-specific topics and local cultural coverage than generic multilingual suites.",
+        saturation: "It also began to compress by 2025 for leading Chinese-capable models, though it remains useful as a complement to C-Eval because its subject mix and phrasing differ."
+      },
+      "GAOKAO-Bench": {
+        launch: "At release in 2023, GAOKAO-Bench mattered because it moved beyond pure multiple choice and asked whether models could handle the mixed objective and subjective structure of China's college entrance exam.",
+        saturation: "Some objective sections began to look easier by 2025, but the benchmark as a whole is not cleanly saturated because its subjective grading and format diversity still create meaningful spread."
+      },
+      "GSM8K": {
+        launch: "At release in 2021, GSM8K became the standard benchmark for natural-language arithmetic reasoning and later the poster child for chain-of-thought improvements.",
+        saturation: "It started to look saturated by 2024, when strong reasoning models and sampling strategies drove scores close enough to ceiling that harder math benchmarks became necessary."
+      },
+      "MATH": {
+        launch: "At release in 2021, MATH signaled that grade-school arithmetic was too easy and that competition-style symbolic reasoning was a more revealing target for frontier systems.",
+        saturation: "It started to compress in 2024 as reasoning-focused models improved sharply, though the hardest parts still retain some diagnostic value and it is not as exhausted as GSM8K."
+      },
+      "FrontierMath": {
+        launch: "At release in November 2024, FrontierMath explicitly signaled that GSM8K and MATH no longer captured the frontier, using private expert-written problems that often take specialists hours or days.",
+        saturation: "As of March 2026 it is not saturated, and the benchmark was designed precisely to stay useful after older public math suites reached near-ceiling performance."
+      },
+      "HumanEval": {
+        launch: "At release in 2021, HumanEval became the canonical execution-based code benchmark by making the field care about passing hidden tests rather than merely generating plausible-looking code.",
+        saturation: "It started to look saturated by 2023 to 2024 because the benchmark is small, public, and heavily reused, which is why contamination-aware successors became important."
+      },
+      "MBPP": {
+        launch: "At release in 2021, MBPP mattered as a lightweight, beginner-friendly code benchmark that made short natural-language-to-code tasks easy to run across many models.",
+        saturation: "It began to look saturated by 2023 to 2024 for stronger coding models, and by then it was mainly useful for smaller models or quick regressions rather than frontier comparison."
+      },
+      "DS-1000": {
+        launch: "At release in 2023, DS-1000 signaled a move toward practical Python library use by testing realistic data science coding instead of toy standalone algorithms.",
+        saturation: "As of March 2026 it is not clearly saturated, although top models are strong enough that it now functions more as a practical-skills benchmark than a pure frontier separator."
+      },
+      "MultiPL-E": {
+        launch: "At release in 2023, MultiPL-E mattered because it showed that code evaluation should not be treated as equivalent to Python evaluation and enabled cross-language comparison at scale.",
+        saturation: "As of March 2026 it is not clearly saturated overall, though easier language ports and Python-adjacent cases have become less discriminative for the best systems."
+      },
+      "SWE-bench": {
+        launch: "At release in 2023, SWE-bench marked a major shift from snippet completion to repository-scale software engineering by asking models to resolve real GitHub issues.",
+        saturation: "It is not saturated as of March 2026, but public exposure and heavy optimization pressure led to harder variants such as Verified and Bash-only settings by 2024 to 2025."
+      },
+      "LiveCodeBench": {
+        launch: "At release in 2024, LiveCodeBench signaled that the field could no longer trust HumanEval and MBPP alone because contamination and stale tasks had become serious issues.",
+        saturation: "As of March 2026 it is not saturated in the usual sense because the benchmark keeps refreshing with time-stamped contest problems and broader coding modes."
+      },
+      "IFEval": {
+        launch: "At release in 2023, IFEval stood out because it measured instruction following with verifiable constraints instead of relying mainly on human preference or LLM judges.",
+        saturation: "It started to compress by 2025 as top instruction-tuned models pushed many literal constraints close to ceiling, though it is still useful for format-following regressions."
+      },
+      "MT-Bench": {
+        launch: "At release in 2023, MT-Bench was one of the clearest signals that multi-turn chat quality and LLM-as-a-judge workflows were becoming central to assistant evaluation.",
+        saturation: "It started to look saturated by 2024 as top chat models clustered and harder user-distribution benchmarks like Arena-Hard-Auto were introduced."
+      },
+      "AlpacaEval 2": {
+        launch: "At release in 2024, AlpacaEval 2 signaled that cheap automatic pairwise judging had become a practical day-to-day tool for instruction-tuned model iteration.",
+        saturation: "It began to compress by 2025 among stronger chat models, and its usefulness increasingly depends on careful control for verbosity and judge bias."
+      },
+      "Arena-Hard-Auto": {
+        launch: "At release in 2024, Arena-Hard-Auto mattered because it mined difficult real-user prompts and aimed to track human Chatbot Arena rankings with cheaper automatic judging.",
+        saturation: "As of March 2026 it is still more discriminative than MT-Bench, but the top end began to tighten in 2025 as proprietary frontier assistants converged on many of its prompts."
+      },
+      "LiveBench": {
+        launch: "At release in 2024, LiveBench signaled a broad pivot toward contamination-resistant general evaluation by refreshing objective tasks every month instead of freezing a static set.",
+        saturation: "As of March 2026 it is not meaningfully saturated because its design is explicitly dynamic and because it avoids relying only on old public question pools."
+      },
+      "TruthfulQA": {
+        launch: "At release in 2021, TruthfulQA mattered because it showed that bigger language models could become more fluent while still confidently repeating common falsehoods.",
+        saturation: "It has not saturated in the same simple way as MCQ breadth benchmarks, but by 2024 it had become more of a focused factuality probe than a leading headline benchmark."
+      },
+      "SimpleQA": {
+        launch: "At release on October 30, 2024, SimpleQA signaled a new push toward short-form factuality because older factual QA sets such as TriviaQA and Natural Questions had become saturated.",
+        saturation: "As of March 2026 it is not saturated for ordinary closed-book models, although OpenAI's own BrowseComp write-up explicitly treats simpler fact lookup with browsing tools as no longer sufficient."
+      },
+      "HaluEval": {
+        launch: "At release in 2023, HaluEval signaled a move toward benchmarking hallucination detection and analysis at larger scale across QA, dialogue, and summarization settings.",
+        saturation: "There is no strong consensus that it is saturated as of March 2026, partly because it is used more for hallucination studies and judge-model work than as a mainstream launch benchmark."
+      },
+      "HarmBench": {
+        launch: "At release in 2024, HarmBench mattered because it made automated red teaming and jailbreak evaluation more standardized and more reproducible across attack families.",
+        saturation: "As of March 2026 it is not saturated, since attack methods and defense methods keep co-evolving and the benchmark is used more as an ongoing robustness stress test."
+      },
+      "LongEval / LongChat": {
+        launch: "When LongChat popularized LongEval in 2023, it signaled that advertised long context windows needed explicit smoke tests for retrieval and line tracking rather than marketing claims alone.",
+        saturation: "Its easiest retrieval settings started to look saturated by 2024, but it still survives as a quick sanity check rather than a complete long-context benchmark."
+      },
+      "LongBench": {
+        launch: "At release in 2023, LongBench became one of the first broad bilingual long-context suites to move evaluation beyond single-needle retrieval and into real task categories.",
+        saturation: "As of March 2026 it is not broadly saturated, although its easier retrieval and summarization subsets have started to compress for top long-context models."
+      },
+      "L-Eval": {
+        launch: "At release in 2024, L-Eval signaled that long-context evaluation should score answer quality on real documents, not just whether a hidden string could be recovered from a haystack.",
+        saturation: "As of March 2026 it is not clearly saturated, since long-document reasoning quality still varies widely even among models with similar advertised context windows."
+      },
+      "InfiniteBench": {
+        launch: "At release in 2024, InfiniteBench mattered because it pushed evaluation well past the 32K regime and asked whether models could function on 100K-plus contexts in both English and Chinese.",
+        saturation: "As of March 2026 it is not clearly saturated, especially on tasks that require more than simple retrieval from super-long context."
+      },
+      "RULER": {
+        launch: "At release in 2024, RULER signaled that long-context claims should be tested with configurable stress tasks that go beyond a single needle-in-a-haystack setup.",
+        saturation: "As of March 2026 it is not saturated overall, although the easiest retrieval-style slices have become less informative than the compositional and multi-needle settings."
+      },
+      "BrowseComp": {
+        launch: "At release on April 10, 2025, BrowseComp signaled that basic fact benchmarks were too easy once models got browsing tools and that the harder problem was persistent search over obscure, entangled facts.",
+        saturation: "As of March 2026 it is not saturated, and OpenAI's own release framed it as a response to simpler factual browsing tasks already becoming too easy."
+      },
+      "GDPval": {
+        launch: "At release on September 25, 2025, GDPval signaled a shift away from academic-style tests toward economically valuable occupational work, with real deliverables, reference files, and expert pairwise grading across 44 jobs.",
+        saturation: "As of March 2026 it is not saturated; the paper explicitly argues the win-rate setup has no simple fixed ceiling, and the benchmark is still in an early version with only a gold subset opened publicly."
+      },
+      "Humanity's Last Exam": {
+        launch: "At release in early 2025, Humanity's Last Exam signaled that broad academic benchmarks like MMLU had become too easy for frontier systems, so a harder cross-domain exam was needed.",
+        saturation: "As of March 2026 it is not saturated, although rapid progress in 2025 forced the organizers to discuss rolling variants precisely because strong systems can close benchmark gaps quickly."
+      }
+    };
+
+    const categoryMap = {
+      knowledge: "Knowledge",
+      math: "Math",
+      code: "Code",
+      chat: "Chat / Instruction",
+      truth: "Truth / Safety",
+      long: "Long Context",
+      agent: "Agent / Frontier"
+    };
+
+    const statTotal = document.getElementById("statTotal");
+    const statFamilies = document.getElementById("statFamilies");
+    const statChinese = document.getElementById("statChinese");
+    const statGuarded = document.getElementById("statGuarded");
+    const chromeCount = document.getElementById("chromeCount");
+    const searchInput = document.getElementById("searchInput");
+    const resultsSummary = document.getElementById("resultsSummary");
+    const benchmarkGrid = document.getElementById("benchmarkGrid");
+    const scrollProgressBar = document.getElementById("scrollProgressBar");
+    let activeFilter = "all";
+    let revealObserver;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function accessClass(accessType) {
+      if (accessType === "dynamic") return "pill-dynamic";
+      if (accessType === "mixed") return "pill-mixed";
+      if (accessType === "private") return "pill-private";
+      return "pill-public";
+    }
+
+    function matchesFilter(benchmark) {
+      if (activeFilter === "all") return true;
+      if (activeFilter in categoryMap) return benchmark.category === categoryMap[activeFilter];
+      if (activeFilter === "chinese") {
+        return benchmark.tags.some(tag => tag === "Chinese" || tag === "Bilingual");
+      }
+      if (activeFilter === "guarded") {
+        return benchmark.accessType !== "public";
+      }
+      if (activeFilter === "less-common") {
+        return benchmark.tags.includes("Less Common");
+      }
+      return true;
+    }
+
+    function matchesSearch(benchmark, query) {
+      if (!query) return true;
+      const history = benchmarkHistory[benchmark.name] || { launch: "", saturation: "" };
+      const haystack = [
+        benchmark.name,
+        benchmark.owner,
+        benchmark.category,
+        benchmark.scope,
+        benchmark.format,
+        benchmark.measures,
+        benchmark.metric,
+        benchmark.meaning,
+        history.launch,
+        history.saturation,
+        benchmark.tags.join(" ")
+      ].join(" ").toLowerCase();
+      return haystack.includes(query);
+    }
+
+    function renderStats() {
+      statTotal.textContent = benchmarks.length;
+      if (chromeCount) chromeCount.textContent = String(benchmarks.length);
+      statFamilies.textContent = new Set(benchmarks.map(item => item.category)).size;
+      statChinese.textContent = benchmarks.filter(item => item.tags.some(tag => tag === "Chinese" || tag === "Bilingual")).length;
+      statGuarded.textContent = benchmarks.filter(item => item.accessType !== "public").length;
+    }
+
+    function renderBenchmarks() {
+      const query = searchInput.value.trim().toLowerCase();
+      const visible = benchmarks
+        .filter(item => matchesFilter(item) && matchesSearch(item, query))
+        .sort((a, b) => b.year - a.year || a.name.localeCompare(b.name));
+      resultsSummary.textContent = `${visible.length} visible`;
+
+      if (!visible.length) {
+        benchmarkGrid.innerHTML = '<div class="empty-state">No matches. Try a broader filter or a shorter search string.</div>';
+        return;
+      }
+
+      benchmarkGrid.innerHTML = visible.map((item, index) => {
+        const history = benchmarkHistory[item.name] || { launch: "", saturation: "" };
+        const tagHtml = item.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
+        const links = [];
+        if (item.paper) {
+          links.push(`<a class="resource-link" href="${escapeHtml(item.paper)}" target="_blank" rel="noreferrer">Paper</a>`);
+        }
+        if (item.project) {
+          links.push(`<a class="resource-link" href="${escapeHtml(item.project)}" target="_blank" rel="noreferrer">Project</a>`);
+        }
+
+        return `
+          <article class="benchmark-card" style="transition-delay: ${Math.min(index * 24, 220)}ms;">
+            <div class="benchmark-head">
+              <div>
+                <h3 class="benchmark-title">${escapeHtml(item.name)}</h3>
+                <div class="benchmark-meta">${escapeHtml(String(item.year))} · ${escapeHtml(item.owner)}</div>
+              </div>
+              <div class="pill-row">
+                <span class="pill pill-category">${escapeHtml(item.category)}</span>
+                <span class="pill ${accessClass(item.accessType)}">${escapeHtml(item.accessLabel)}</span>
+              </div>
+            </div>
+
+            <p class="benchmark-summary">${escapeHtml(item.scope)} ${escapeHtml(item.format)} ${escapeHtml(history.launch)} ${escapeHtml(history.saturation)}</p>
+
+            <dl class="definition-grid">
+              <div class="definition">
+                <dt>What it measures</dt>
+                <dd>${escapeHtml(item.measures)}</dd>
+              </div>
+              <div class="definition">
+                <dt>Scoring technique</dt>
+                <dd>${escapeHtml(item.metric)}</dd>
+              </div>
+              <div class="definition">
+                <dt>What the score means</dt>
+                <dd>${escapeHtml(item.meaning)}</dd>
+              </div>
+              <div class="definition">
+                <dt>Availability</dt>
+                <dd>${escapeHtml(item.accessLabel)} benchmark maintained by ${escapeHtml(item.owner)}.</dd>
+              </div>
+            </dl>
+
+            <div class="tag-row">${tagHtml}</div>
+            <div class="link-row">${links.join("")}</div>
+          </article>
+        `;
+      }).join("");
+
+      wireRevealTargets(".benchmark-card");
+    }
+
+    function syncFilterButtons() {
+      document.querySelectorAll(".filter-btn").forEach(button => {
+        button.classList.toggle("active", button.getAttribute("data-filter") === activeFilter);
+      });
+    }
+
+    function setActiveFilter(filter) {
+      activeFilter = filter;
+      syncFilterButtons();
+      renderBenchmarks();
+    }
+
+    function wireFilters() {
+      document.querySelectorAll(".filter-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          setActiveFilter(button.getAttribute("data-filter"));
+        });
+      });
+    }
+
+    function wireScrollSpy() {
+      const links = Array.from(document.querySelectorAll(".chrome-link"))
+        .filter(link => (link.getAttribute("href") || "").startsWith("#"));
+      const sections = links
+        .map(link => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+      const observer = new IntersectionObserver(entries => {
+        const visible = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (!visible) return;
+        const id = `#${visible.target.id}`;
+        links.forEach(link => {
+          link.classList.toggle("active", link.getAttribute("href") === id);
+        });
+      }, { rootMargin: "-20% 0px -55% 0px", threshold: [0.1, 0.3, 0.5] });
+
+      sections.forEach(section => observer.observe(section));
+    }
+
+    function wirePosterFilters() {
+      document.querySelectorAll("[data-filter-target]").forEach(tile => {
+        tile.addEventListener("click", event => {
+          event.preventDefault();
+          setActiveFilter(tile.getAttribute("data-filter-target"));
+          document.getElementById("atlas").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    }
+
+    function wireScrollProgress() {
+      function updateScrollProgress() {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = scrollable > 0 ? window.scrollY / scrollable : 0;
+        if (scrollProgressBar) {
+          scrollProgressBar.style.transform = `scaleX(${Math.min(Math.max(progress, 0), 1)})`;
+        }
+      }
+
+      updateScrollProgress();
+      window.addEventListener("scroll", updateScrollProgress, { passive: true });
+      window.addEventListener("resize", updateScrollProgress);
+    }
+
+    function getRevealObserver() {
+      if (revealObserver) return revealObserver;
+
+      revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          revealObserver.unobserve(entry.target);
+        });
+      }, { rootMargin: "0px 0px -10% 0px", threshold: 0.12 });
+
+      return revealObserver;
+    }
+
+    function wireRevealTargets(selector) {
+      const observer = getRevealObserver();
+      document.querySelectorAll(selector).forEach(target => {
+        if (target.dataset.revealBound === "true") return;
+        target.dataset.revealBound = "true";
+        observer.observe(target);
+      });
+    }
+
+    document.body.classList.add("enhanced");
+    renderStats();
+    wireFilters();
+    wireScrollSpy();
+    wirePosterFilters();
+    wireScrollProgress();
+    wireRevealTargets(".scroll-section");
+    renderBenchmarks();
+    searchInput.addEventListener("input", renderBenchmarks);
+  </script>
+</body>
+</html>

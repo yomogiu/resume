@@ -1,2 +1,15 @@
 .archive/
 ideas/
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+node_modules/
+.env
